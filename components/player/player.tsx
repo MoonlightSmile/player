@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import { useWavesurfer } from "@wavesurfer/react";
-import Timeline from "wavesurfer.js/dist/plugins/timeline.esm.js";
+import { useCallback, useRef, useEffect } from "react";
 import { Button } from "../ui/button";
 import { useHotkeys } from "react-hotkeys-hook";
-import { findMatchingItem } from "./util";
-import { throttle } from "lodash-es";
-import { useThrottle } from "@uidotdev/usehooks";
+import { usePlayerStore } from "@/store/player";
+import WaveSurfer from "wavesurfer.js";
+import { TIMELINES } from "./data";
+import npr from "@/whisper/npr.wav";
 
 // a: 上一个
 // s: 重复
@@ -18,26 +17,22 @@ import { useThrottle } from "@uidotdev/usehooks";
 // timeline
 // https://static.ssr8.cn/player/timeline.json
 // const audioUrls = ["https://static.ssr8.cn/player/jobs.mp3"];
-const audioUrls = ["https://static.ssr8.cn/player/segment.wav"];
+// const audioUrl = "https://static.ssr8.cn/player/segment.wav";
+const audioUrl = npr;
 
 const loadJSON = async () => {
-  return await fetch("https://static.ssr8.cn/player/segment.json")
+  // return await fetch("https://static.ssr8.cn/player/segment.json")
+  return await fetch("https://static.ssr8.cn/player/timeline.json")
     .then((response) => {
-      // Check if the request was successful
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      // Parse the JSON response body
       return response.json();
     })
     .then((data) => {
-      // 'data' is the JavaScript object you want
-      // console.log(data);
       return data;
-      // You can work with your JavaScript object here
     })
     .catch((error) => {
-      // Handle any errors that occurred during the fetch
       console.error("Error fetching data: ", error);
     });
 };
@@ -52,208 +47,186 @@ const formatTime = (seconds: number) =>
 
 // A React component that will render wavesurfer
 export const Player = () => {
-  const containerRef = useRef(null);
-  const bindEventRef = useRef(false);
-  const timeRef = useRef(0);
-  const framesRef = useRef<any>([]);
-  const autoPauseRef = useRef<boolean>(true);
-  const [status, setStatus] = useState<string | null>(null);
-  const [transcription, setTranscription] = useState<any>(null);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [urlIndex, setUrlIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const {
+    ws,
+    setWs,
+    timelines,
+    setTimelines,
+    onTimeupdate,
+    isPlaying,
+    setIsPlaying,
+    currentTime,
+    currentSegmentIndex,
+    autoPause,
+    setConfigAutoPause,
+  } = usePlayerStore();
 
-  const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
-    container: containerRef,
-    height: 100,
-    waveColor: "rgb(200, 0, 200)",
-    progressColor: "rgb(100, 0, 100)",
-    url: audioUrls[urlIndex],
-    // plugins: useMemo(() => [Timeline.create()], []),
-  });
+  useEffect(() => {
+    if (ws) return;
+
+    const _ws = WaveSurfer.create({
+      container: containerRef.current!,
+      url: audioUrl,
+      height: 100,
+      waveColor: "rgb(200, 0, 200)",
+      progressColor: "rgb(100, 0, 100)",
+    });
+    console.log("_ws", _ws);
+    setWs(_ws);
+  }, [setWs, ws]);
 
   useEffect(() => {
     (async () => {
-      const data: any = await loadJSON();
-      framesRef.current = data?.transcription ?? [];
+      // const data: any = await loadJSON();
+      // setTimelines(data?.timeline);
+      setTimelines(TIMELINES.timeline);
     })();
-  }, []);
+  }, [setTimelines]);
 
   useHotkeys(
-    ["space", "a", "d", "q"],
+    ["space", "a", "d", "q", "s"],
     (keyboardEvent, hotkeyEvent) => {
-      if (!wavesurfer) return;
+      if (!ws) return;
       keyboardEvent.preventDefault();
 
       switch (hotkeyEvent.keys!.join("")) {
         case "space":
-          console.log("useHotkeys space");
           document?.getElementById("play")?.click();
           break;
         case "a":
           document?.getElementById("prev")?.click();
           break;
         case "d":
-          console.log("useHotkeys d");
           document?.getElementById("next")?.click();
           break;
         case "q":
-          console.log("useHotkeys q");
           document?.getElementById("auto-pause")?.click();
+        case "s":
+          document?.getElementById("loop")?.click();
           break;
       }
     },
-    [wavesurfer]
+    [ws]
   );
 
   const onPlayPause = useCallback(() => {
-    console.log("onPlayPause", wavesurfer);
-    wavesurfer && wavesurfer.playPause();
-  }, [wavesurfer]);
-
-  const onTimeupdate = useCallback(
-    (currentTime: number) => {
-      // 人体感受
-      const _index = findMatchingItem(currentTime + 1.2, framesRef.current);
-      // onPlayPause();
-      console.log(
-        "currentTime::",
-        currentTime,
-        currentIndex,
-        _index,
-        autoPauseRef.current,
-        wavesurfer
-      );
-
-      if (currentIndex !== _index) {
-        if (autoPauseRef.current) {
-          wavesurfer!.playPause();
-        } else {
-          setCurrentIndex(_index);
-        }
-      }
-    },
-    [autoPauseRef, currentIndex, wavesurfer, framesRef]
-  );
+    console.log("ws: onPlayPause", ws);
+    ws && ws.playPause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ws, isPlaying]);
 
   useEffect(() => {
-    if (!wavesurfer || bindEventRef.current) return;
+    if (!ws) return;
 
-    console.log("wavesurfer on event", wavesurfer);
-    wavesurfer.on("play", () => {
-      setStatus("play");
-      console.log("wavesurfer play");
-    });
-    wavesurfer.on("pause", () => {
-      setStatus("pause");
-      console.log("wavesurfer pause");
-    });
-    wavesurfer.on("seeking", () => {
-      console.log("seeking");
-    });
-    wavesurfer.on("timeupdate", (currentTime) => {
-      console.log("timeupdate", currentTime);
-      // throttleTimeupdate(currentTime);
-      if (currentTime - timeRef.current <= 0.05) return;
-      timeRef.current = currentTime;
-      onTimeupdate(currentTime);
-    });
-    wavesurfer.on("ready", () => {
-      console.log("wavesurfer ready");
-    });
-    wavesurfer.on("destroy", () => {
-      console.log("wavesurfer destroy");
-    });
-    bindEventRef.current = true;
+    const subscriptions = [
+      ws.on("play", () => {
+        setIsPlaying(true);
+        console.log("wavesurfer play");
+      }),
+      ws.on("pause", () => {
+        setIsPlaying(false);
+        console.log("wavesurfer pause");
+      }),
+      ws.on("seeking", () => {
+        console.log("seeking");
+      }),
+      ws.on("timeupdate", (currentTime) => {
+        onTimeupdate(currentTime);
+      }),
+      ws.on("ready", () => {
+        console.log("wavesurfer ready");
+      }),
+      ws.on("destroy", () => {
+        console.log("wavesurfer destroy");
+      }),
+    ];
 
     return () => {
-      console.log("unmount wavesurfer");
-      bindEventRef.current = false;
-      wavesurfer?.unAll();
-      wavesurfer?.destroy();
+      subscriptions.forEach((s) => s());
+      ws?.destroy();
     };
-  }, [wavesurfer]);
-
-  const onUrlChange = useCallback(() => {
-    setUrlIndex((index) => (index + 1) % audioUrls.length);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ws]);
 
   const handlePrevSegment = useCallback(() => {
-    if (currentIndex === 0) return;
+    if (currentSegmentIndex === 0) return;
 
     if (isPlaying) {
       onPlayPause();
     }
-    const prevFrame = framesRef.current[currentIndex - 1];
-    const prevFrom = prevFrame?.offsets?.from ?? 0;
-    const dest = prevFrom / 1000 / wavesurfer!.getDuration();
-    wavesurfer?.seekTo(dest);
-    setCurrentIndex((i) => i - 1);
+    const prevSegment = timelines[currentSegmentIndex - 1];
+    const prevStartTime = prevSegment?.startTime ?? 0;
+    const dest = prevStartTime / ws!.getDuration();
+    console.log("ws dest", dest);
+    ws?.seekTo(dest);
     onPlayPause();
-  }, [currentIndex, isPlaying, framesRef, wavesurfer, onPlayPause]);
+  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
 
   const handleNextSegment = useCallback(() => {
-    if (currentIndex === frames.length - 1) return;
+    if (currentSegmentIndex === timelines.length - 1) return;
+
     if (isPlaying) {
       onPlayPause();
     }
-    console.log("status", status);
-    const nextFrame = framesRef.current[currentIndex + 1];
-    const nextFrom = nextFrame?.offsets?.from ?? 0;
-    const dest = nextFrom / 1000 / wavesurfer!.getDuration();
-
-    wavesurfer?.seekTo(dest);
-    setCurrentIndex((i) => i + 1);
+    const nextSegment = timelines[currentSegmentIndex + 1];
+    const nextStartTime = nextSegment?.startTime ?? 0;
+    const dest = nextStartTime / ws!.getDuration();
+    console.log("ws dest", dest);
+    ws?.seekTo(dest);
     onPlayPause();
-  }, [currentIndex, framesRef, isPlaying, status, wavesurfer, onPlayPause]);
+  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
+
+  const handleLoopCurrentSegment = useCallback(() => {
+    if (isPlaying) {
+      onPlayPause();
+    }
+    const currentSegment = timelines[currentSegmentIndex];
+    const currentStartTime = currentSegment?.startTime ?? 0;
+    const dest = currentStartTime / ws!.getDuration();
+    console.log("ws dest", dest);
+    ws?.seekTo(dest);
+    onPlayPause();
+  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
 
   const handleLoopConfig = useCallback(() => {
-    console.log("handleLoopConfig");
-    autoPauseRef.current = !autoPauseRef.current;
-  }, []);
+    setConfigAutoPause(!autoPause);
+  }, [autoPause, setConfigAutoPause]);
 
-  // console.log("frames", frames);
-  console.log("currentIndex", currentIndex, autoPauseRef.current);
+  console.log("timelines", timelines);
 
   return (
     <>
       <div ref={containerRef} />
-
-      <p>Current audio: {audioUrls[urlIndex]}</p>
-
+      <p>Current audio: {audioUrl}</p>
       <p>Current time: {formatTime(currentTime)}</p>
+      <p>{timelines[currentSegmentIndex]?.text}</p>
 
-      <div style={{ margin: "1em 0", display: "flex", gap: "1em" }}>
-        <button onClick={onUrlChange}>Change audio</button>
-
-        <button id="play" onClick={onPlayPause} style={{ minWidth: "5em" }}>
+      <div className="flex gap-4 mx-4 my-4">
+        <Button id="play" onClick={onPlayPause}>
           {isPlaying ? "Pause" : "Play"}
-        </button>
+        </Button>
+        <Button id="prev" onClick={handlePrevSegment}>
+          Prev
+        </Button>
+        <Button id="next" onClick={handleNextSegment}>
+          Next
+        </Button>
+        <Button
+          id="seek"
+          onClick={() => {
+            ws?.seekTo(0.10868267048847487);
+          }}
+        >
+          Seek
+        </Button>
+        <Button id="loop" onClick={handleLoopCurrentSegment}>
+          重复此 segment
+        </Button>
+        <Button id="auto-pause" onClick={handleLoopConfig as any}>
+          {autoPause ? "关闭" : "开启"}自动暂时
+        </Button>
       </div>
-      <Button id="prev" onClick={handlePrevSegment}>
-        Prev
-      </Button>
-      <Button id="next" onClick={handleNextSegment}>
-        Next
-      </Button>
-      <Button
-        id="seek"
-        onClick={() => {
-          wavesurfer?.seekTo(0.10868267048847487);
-        }}
-      >
-        Seek
-      </Button>
-      <Button
-        id="loop"
-        onClick={() => {
-          wavesurfer?.seekTo(0.10868267048847487);
-        }}
-      >
-        重复此 segment
-      </Button>
-      <Button id="auto-pause" onClick={handleLoopConfig}>
-        {autoPauseRef.current ? "关闭" : "开启"}自动暂时
-      </Button>
     </>
   );
 };

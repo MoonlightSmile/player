@@ -23,7 +23,8 @@
     "react-hotkeys-hook": "^4.5.0",
     "tailwind-merge": "^2.2.2",
     "tailwindcss-animate": "^1.0.7",
-    "wavesurfer.js": "^7.7.9"
+    "wavesurfer.js": "^7.7.9",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
