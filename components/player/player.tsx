@@ -6,7 +6,9 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { usePlayerStore } from "@/store/player";
 import WaveSurfer from "wavesurfer.js";
 import { TIMELINES } from "./data";
-import npr from "@/whisper/npr.wav";
+// import npr from "@/whisper/npr.wav";
+import npr from "@/whisper/npr_mp3.mp3";
+import { Subtitle } from "./subtitles";
 
 // a: 上一个
 // s: 重复
@@ -51,6 +53,8 @@ export const Player = () => {
   const {
     ws,
     setWs,
+    isInitialized,
+    setIsInitialized,
     timelines,
     setTimelines,
     onTimeupdate,
@@ -60,6 +64,7 @@ export const Player = () => {
     currentSegmentIndex,
     autoPause,
     setConfigAutoPause,
+    playPause,
   } = usePlayerStore();
 
   useEffect(() => {
@@ -87,9 +92,10 @@ export const Player = () => {
   useHotkeys(
     ["space", "a", "d", "q", "s"],
     (keyboardEvent, hotkeyEvent) => {
-      if (!ws) return;
-      keyboardEvent.preventDefault();
+      if (!ws || !isInitialized) return;
 
+      keyboardEvent.preventDefault();
+      console.log("keys", hotkeyEvent.keys!.join(""));
       switch (hotkeyEvent.keys!.join("")) {
         case "space":
           document?.getElementById("play")?.click();
@@ -102,19 +108,14 @@ export const Player = () => {
           break;
         case "q":
           document?.getElementById("auto-pause")?.click();
+          break;
         case "s":
           document?.getElementById("loop")?.click();
           break;
       }
     },
-    [ws]
+    [ws, isInitialized]
   );
-
-  const onPlayPause = useCallback(() => {
-    console.log("ws: onPlayPause", ws);
-    ws && ws.playPause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ws, isPlaying]);
 
   useEffect(() => {
     if (!ws) return;
@@ -135,6 +136,7 @@ export const Player = () => {
         onTimeupdate(currentTime);
       }),
       ws.on("ready", () => {
+        setIsInitialized(true);
         console.log("wavesurfer ready");
       }),
       ws.on("destroy", () => {
@@ -153,57 +155,59 @@ export const Player = () => {
     if (currentSegmentIndex === 0) return;
 
     if (isPlaying) {
-      onPlayPause();
+      playPause();
     }
     const prevSegment = timelines[currentSegmentIndex - 1];
     const prevStartTime = prevSegment?.startTime ?? 0;
     const dest = prevStartTime / ws!.getDuration();
-    console.log("ws dest", dest);
+    console.log("ws dest1", dest);
     ws?.seekTo(dest);
-    onPlayPause();
-  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
+    playPause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSegmentIndex, isPlaying, timelines, ws]);
 
   const handleNextSegment = useCallback(() => {
     if (currentSegmentIndex === timelines.length - 1) return;
 
     if (isPlaying) {
-      onPlayPause();
+      playPause();
     }
     const nextSegment = timelines[currentSegmentIndex + 1];
     const nextStartTime = nextSegment?.startTime ?? 0;
     const dest = nextStartTime / ws!.getDuration();
-    console.log("ws dest", dest);
+    console.log("ws dest3", dest);
     ws?.seekTo(dest);
-    onPlayPause();
-  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
+    playPause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSegmentIndex, isPlaying, timelines, ws]);
 
   const handleLoopCurrentSegment = useCallback(() => {
     if (isPlaying) {
-      onPlayPause();
+      playPause();
     }
     const currentSegment = timelines[currentSegmentIndex];
     const currentStartTime = currentSegment?.startTime ?? 0;
     const dest = currentStartTime / ws!.getDuration();
-    console.log("ws dest", dest);
+    console.log("ws dest2", dest);
     ws?.seekTo(dest);
-    onPlayPause();
-  }, [currentSegmentIndex, isPlaying, onPlayPause, timelines, ws]);
+    playPause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSegmentIndex, isPlaying, timelines, ws]);
 
   const handleLoopConfig = useCallback(() => {
     setConfigAutoPause(!autoPause);
-  }, [autoPause, setConfigAutoPause]);
-
-  console.log("timelines", timelines);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPause]);
 
   return (
     <>
       <div ref={containerRef} />
       <p>Current audio: {audioUrl}</p>
       <p>Current time: {formatTime(currentTime)}</p>
-      <p>{timelines[currentSegmentIndex]?.text}</p>
+      <Subtitle text={timelines[currentSegmentIndex]?.text} />
 
       <div className="flex gap-4 mx-4 my-4">
-        <Button id="play" onClick={onPlayPause}>
+        <Button id="play" onClick={playPause}>
           {isPlaying ? "Pause" : "Play"}
         </Button>
         <Button id="prev" onClick={handlePrevSegment}>
@@ -211,14 +215,6 @@ export const Player = () => {
         </Button>
         <Button id="next" onClick={handleNextSegment}>
           Next
-        </Button>
-        <Button
-          id="seek"
-          onClick={() => {
-            ws?.seekTo(0.10868267048847487);
-          }}
-        >
-          Seek
         </Button>
         <Button id="loop" onClick={handleLoopCurrentSegment}>
           重复此 segment
