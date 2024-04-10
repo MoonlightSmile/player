@@ -9,6 +9,14 @@ import { TIMELINES } from "./data";
 // import npr from "@/whisper/npr.wav";
 import npr from "@/whisper/npr_mp3.mp3";
 import { Subtitle } from "./subtitles";
+import { Switch } from "@/components/ui/switch";
+
+import {
+  PauseIcon,
+  PlayIcon,
+  SkipBackIcon,
+  SkipForwardIcon,
+} from "lucide-react";
 
 // a: 上一个
 // s: 重复
@@ -129,6 +137,9 @@ export const Player = () => {
         setIsPlaying(false);
         console.log("wavesurfer pause");
       }),
+      ws.on("decode", () => {
+        console.log("wavesurfer decode");
+      }),
       ws.on("seeking", () => {
         console.log("seeking");
       }),
@@ -151,7 +162,7 @@ export const Player = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws]);
 
-  const handlePrevSegment = useCallback(() => {
+  const onPrev: any = useCallback(() => {
     if (currentSegmentIndex === 0) return;
 
     if (isPlaying) {
@@ -166,7 +177,7 @@ export const Player = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSegmentIndex, isPlaying, timelines, ws]);
 
-  const handleNextSegment = useCallback(() => {
+  const onNext = useCallback(() => {
     if (currentSegmentIndex === timelines.length - 1) return;
 
     if (isPlaying) {
@@ -194,7 +205,7 @@ export const Player = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSegmentIndex, isPlaying, timelines, ws]);
 
-  const handleLoopConfig = useCallback(() => {
+  const onAutoPause = useCallback(() => {
     setConfigAutoPause(!autoPause);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoPause]);
@@ -206,21 +217,47 @@ export const Player = () => {
       <p>Current time: {formatTime(currentTime)}</p>
       <Subtitle text={timelines[currentSegmentIndex]?.text} />
 
-      <div className="flex gap-4 mx-4 my-4">
-        <Button id="play" onClick={playPause}>
-          {isPlaying ? "Pause" : "Play"}
+      <div className="flex gap-4 mx-4 my-4 items-center">
+        <Button
+          className="aspect-square p-0 h-10"
+          id="prev"
+          variant="ghost"
+          size="lg"
+          onClick={onPrev}
+        >
+          <SkipBackIcon className="w-6 h-6" />
         </Button>
-        <Button id="prev" onClick={handlePrevSegment}>
-          Prev
+
+        <Button
+          variant="default"
+          onClick={playPause}
+          id="play"
+          className="aspect-square p-0 h-12 rounded-full"
+        >
+          {!isPlaying ? (
+            <PlayIcon fill="white" className="w-6 h-6" />
+          ) : (
+            <PauseIcon fill="white" className="w-6 h-6" />
+          )}
         </Button>
-        <Button id="next" onClick={handleNextSegment}>
-          Next
+
+        <Button
+          variant="ghost"
+          size="lg"
+          onClick={onNext}
+          id="next"
+          className="aspect-square p-0 h-10"
+        >
+          <SkipForwardIcon className="w-6 h-6" />
         </Button>
+        <Switch
+          id="auto-pause"
+          checked={autoPause}
+          onCheckedChange={onAutoPause}
+        />
+
         <Button id="loop" onClick={handleLoopCurrentSegment}>
           重复此 segment
-        </Button>
-        <Button id="auto-pause" onClick={handleLoopConfig as any}>
-          {autoPause ? "关闭" : "开启"}自动暂时
         </Button>
       </div>
     </>
