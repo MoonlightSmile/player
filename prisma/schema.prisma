@@ -1,0 +1,42 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Series {
+  id          Int       @id @default(autoincrement())
+  channel     String
+  title       String?
+  link        String?
+  description String?
+  thumbnail   String?
+  category    String[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  Episode     Episode[]
+}
+
+model Episode {
+  id          Int     @id @default(autoincrement())
+  mediaUrl    String // r2 的链接
+  alignUrl    String // r2 timeline 链接
+  whsiperUrl  String // r2 whisper 链接
+  series      Series  @relation(fields: [seriesId], references: [id])
+  title       String?
+  episodeId   String // 三方 ID
+  link        String? // 三方自己的链接
+  description String?
+  audioUrl    String
+  thumbnail   String?
+  seriesId    Int
+}
