@@ -13,6 +13,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Rss {
+  id                Int      @id @default(autoincrement())
+  name              String
+  url               String
+  latestContentHash String // 用于对比 rss 内容是否变动
+  latestFileUrl     String // R2 里的文件，用于 diff items
+  status            String
+  series            Series?  @relation(fields: [seriesId], references: [id])
+  seriesId          Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deleted           Boolean  @default(false)
+}
+
 model Series {
   id          Int       @id @default(autoincrement())
   channel     String
@@ -21,16 +35,21 @@ model Series {
   description String?
   thumbnail   String?
   category    String[]
+  episodes    Episode[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  Episode     Episode[]
+
+  deleted Boolean @default(false)
+  Rss     Rss[]
 }
 
 model Episode {
   id          Int     @id @default(autoincrement())
-  mediaUrl    String // r2 的链接
-  alignUrl    String // r2 timeline 链接
-  whsiperUrl  String // r2 whisper 链接
+  mediaUrl    String? // r2 的链接
+  alignUrl    String? // r2 timeline 链接
+  whisperUrl  String? // r2 whisper 链接
+  status      String
+  order       Int // 三方的顺序
   series      Series  @relation(fields: [seriesId], references: [id])
   title       String?
   episodeId   String // 三方 ID
@@ -39,4 +58,5 @@ model Episode {
   audioUrl    String
   thumbnail   String?
   seriesId    Int
+  deleted     Boolean @default(false)
 }

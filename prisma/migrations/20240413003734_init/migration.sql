@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Rss" ALTER COLUMN "latestFileUrl" DROP DEFAULT,
+ALTER COLUMN "name" DROP DEFAULT;

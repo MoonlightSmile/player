@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Episode" ALTER COLUMN "mediaUrl" DROP NOT NULL,
+ALTER COLUMN "alignUrl" DROP NOT NULL,
+ALTER COLUMN "whisperUrl" DROP NOT NULL;
