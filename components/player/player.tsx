@@ -9,10 +9,12 @@ import WaveSurfer from "wavesurfer.js";
 // import npr from "@/whisper/npr_mp3.mp3";
 import { Subtitle } from "./subtitles";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip } from "react-tooltip";
 
 import {
   PauseIcon,
   PlayIcon,
+  Repeat1Icon,
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react";
@@ -226,15 +228,20 @@ export const Player = ({
           variant="ghost"
           size="lg"
           onClick={onPrev}
+          data-tooltip-content={"跳到上一段字幕播放,快捷键 D"}
+          data-tooltip-id="prev-tooltip"
         >
           <SkipBackIcon className="w-6 h-6" />
         </Button>
+        <Tooltip id="prev-tooltip" place="top-start" />
 
         <Button
           variant="default"
           onClick={playPause}
           id="play"
           className="aspect-square p-0 h-12 rounded-full"
+          data-tooltip-content={"播放/暂停，快捷键 Space"}
+          data-tooltip-id="play-tooltip"
         >
           {!isPlaying ? (
             <PlayIcon fill="white" className="w-6 h-6" />
@@ -242,6 +249,7 @@ export const Player = ({
             <PauseIcon fill="white" className="w-6 h-6" />
           )}
         </Button>
+        <Tooltip id="play-tooltip" />
 
         <Button
           variant="ghost"
@@ -249,20 +257,34 @@ export const Player = ({
           onClick={onNext}
           id="next"
           className="aspect-square p-0 h-10"
+          data-tooltip-content={"跳到下一段字幕播放,快捷键 D"}
+          data-tooltip-id="next-tooltip"
         >
           <SkipForwardIcon className="w-6 h-6" />
         </Button>
-        <Switch
-          id="auto-pause"
-          checked={autoPause}
-          onCheckedChange={onAutoPause}
-        />
+        <Tooltip id="next-tooltip" />
+
         <Button
           id="loop"
-          className="invisible"
+          className="aspect-square p-0 h-8 rounded-full"
           onClick={handleLoopCurrentSegment}
-        ></Button>
+          data-tooltip-content={"当前字幕重新播放,快捷键 S"}
+          data-tooltip-id="loop-tooltip"
+        >
+          <Repeat1Icon size={18} />
+        </Button>
+        <Tooltip id="loop-tooltip" />
+
+        <Switch
+          id="auto-pause"
+          data-tooltip-id="auto-pause-tooltip"
+          checked={autoPause}
+          onCheckedChange={onAutoPause}
+          data-tooltip-content={"在每个字幕的末尾自动暂停播放,快捷键 Q"}
+        />
+        <Tooltip id="auto-pause-tooltip" />
       </div>
+
       <Subtitle
         visible={subtitleVisible}
         text={timelines?.[currentSegmentIndex]?.text}

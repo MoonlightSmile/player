@@ -9,7 +9,9 @@ export default async function Page({
   const { episodeSlug } = params;
   return (
     <MaxWidthWrapper>
-      <EpisodeDetail episodeId={Number(episodeSlug)} />
+      <div className="mt-24">
+        <EpisodeDetail episodeId={Number(episodeSlug)} />
+      </div>
     </MaxWidthWrapper>
   );
 }
