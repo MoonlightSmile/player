@@ -8,7 +8,7 @@ export const PodcastList = async () => {
   return (
     <MaxWidthWrapper>
       <div className="flex gap-6 mt-10">
-        {(seriesList ?? []).map((series: any, index) => {
+        {(seriesList ?? []).map((series: any) => {
           return (
             <PodcastCover
               {...{
