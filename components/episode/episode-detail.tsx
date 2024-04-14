@@ -11,8 +11,15 @@ export const EpisodeDetail = async ({ episodeId }: { episodeId: number }) => {
 
   console.log("item", item);
   if (!item) return null;
-  const { title, description, thumbnail, mediaUrl, alignUrl, audioUrl } =
-    (item ?? {}) as any;
+  const {
+    title,
+    description,
+    thumbnail,
+    mediaUrl,
+    alignUrl,
+    audioUrl,
+    status,
+  } = (item ?? {}) as any;
   console.log("mediaUrl", mediaUrl, audioUrl);
   return (
     <div className="flex flex-col px-6 py-4 gap-x-8 rounded-lg overflow-hidden shadow-sm border border-gray-200 cursor-pointer">
@@ -28,11 +35,14 @@ export const EpisodeDetail = async ({ episodeId }: { episodeId: number }) => {
       </div>
 
       <div className="my-6">
-        <Player
-          audioUrl={buildUrl(mediaUrl)}
-          // audioUrl={audioUrl}
-          timelineUrl={buildUrl(alignUrl)}
-        />
+        {status === "DONE" ? (
+          <Player
+            audioUrl={buildUrl(mediaUrl)}
+            timelineUrl={buildUrl(alignUrl)}
+          />
+        ) : (
+          <p>待处理...</p>
+        )}
       </div>
 
       <h2 className="mt-8 text-black text-2xl font-bold">

@@ -22,26 +22,26 @@ async function main() {
     },
   });
   // https://video-api.wsj.com/podcast/rss/wsj/the-journal
-  const upsertRssEntry2 = await db.rss.upsert({
-    where: {
-      id: 2, // Specifying the ID to search for
-    },
-    update: {
-      name: "Lex Fridman Podcast",
-      url: "https://lexfridman.com/feed/podcast/",
-      latestContentHash: "newhash1234",
-      latestFileUrl: "",
-      status: "active",
-      updatedAt: new Date(),
-    },
-    create: {
-      name: "Lex Fridman Podcast",
-      url: "https://lexfridman.com/feed/podcast/",
-      latestContentHash: "newhash1234",
-      latestFileUrl: "",
-      status: "active",
-    },
-  });
+  // const upsertRssEntry2 = await db.rss.upsert({
+  //   where: {
+  //     id: 2, // Specifying the ID to search for
+  //   },
+  //   update: {
+  //     name: "Lex Fridman Podcast",
+  //     url: "https://lexfridman.com/feed/podcast/",
+  //     latestContentHash: "newhash1234",
+  //     latestFileUrl: "",
+  //     status: "active",
+  //     updatedAt: new Date(),
+  //   },
+  //   create: {
+  //     name: "Lex Fridman Podcast",
+  //     url: "https://lexfridman.com/feed/podcast/",
+  //     latestContentHash: "newhash1234",
+  //     latestFileUrl: "",
+  //     status: "active",
+  //   },
+  // });
 }
 
 main()
