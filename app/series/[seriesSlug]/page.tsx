@@ -5,8 +5,7 @@ export default async function Page({
 }: {
   params: { episodeSlug: string; seriesSlug: string };
 }) {
-  const { episodeSlug, seriesSlug } = params;
-  console.log("episodeSlug", episodeSlug, seriesSlug);
+  const { seriesSlug } = params;
   return (
     <main>
       <EpisodeList seriesId={seriesSlug} />
