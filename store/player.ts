@@ -2,11 +2,12 @@ import WaveSurfer from "wavesurfer.js";
 import { create } from "zustand";
 
 interface PlayerStore {
-  ws: WaveSurfer | null;
+  ws: WaveSurfer | null | any;
   isInitialized: boolean;
   isReady: boolean;
   stopReason: null | string;
   isPlaying: boolean;
+  loadProgress: number;
   currentTime: number;
   currentSegmentIndex: number;
   timelines: any[];
@@ -14,10 +15,11 @@ interface PlayerStore {
   subtitleVisible: boolean;
 
   // Setter methods
-  setWs: (ws: WaveSurfer) => void;
+  setWs: (ws: WaveSurfer | any) => void;
   setIsInitialized: (isInitialized: boolean) => void;
   setIsReady: (isReady: boolean) => void;
   setIsPlaying: (isPlaying: boolean) => void;
+  setLoadProgress: (loadProgress: number) => void;
   setCurrentSegmentIndex: (currentSegmentIndex: number) => void;
   setTimelines: (timelines: any[]) => void;
   setConfigAutoPause: (autoPause: boolean) => void;
@@ -36,6 +38,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   isInitialized: false,
   isReady: false,
   isPlaying: false,
+  loadProgress: 0,
   currentTime: 0,
   currentSegmentIndex: 0,
   timelines: [],
@@ -47,6 +50,7 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
   setIsInitialized: (isInitialized: boolean) => set({ isInitialized }),
   setIsReady: (isReady: boolean) => set({ isReady }),
   setIsPlaying: (isPlaying: boolean) => set({ isPlaying }),
+  setLoadProgress: (loadProgress: number) => set({ loadProgress }),
   setCurrentSegmentIndex: (currentSegmentIndex: number) =>
     set({ currentSegmentIndex }),
   setTimelines: (timelines: any[]) => set({ timelines }),

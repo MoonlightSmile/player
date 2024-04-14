@@ -2,7 +2,6 @@ import { episodeItemAction } from "@/actions/episode/item";
 import Image from "next/image";
 import { Player } from "../player/player";
 
-// const buildUrl = (key: string) => `https://upload-v.lingowise.xyz/${key}`;
 const buildUrl = (key: string) => `https://r2.asdpodcast.com/${key}`;
 
 export const EpisodeDetail = async ({ episodeId }: { episodeId: number }) => {
