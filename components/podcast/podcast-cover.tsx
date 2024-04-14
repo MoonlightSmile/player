@@ -1,25 +1,27 @@
 import Image from "next/image";
+import Link from "next/link";
 
 interface Props {
   imageUrl: string;
   title: string;
   channel: string;
+  id: number;
 }
 
-export const PodcastCover = ({ imageUrl, title, channel }: Props) => {
+export const PodcastCover = ({ imageUrl, title, channel, id }: Props) => {
   return (
-    <div>
+    <Link href={`/series/${id}`}>
       <div className="mb-2 w-[176px] h-[176px] rounded-lg overflow-hidden">
         <Image
           src={imageUrl}
           className="w-[176px] h-[176px]"
           width={176}
           height={176}
-          alt="xx"
+          alt={title}
         />
       </div>
       <div className="font-normal text-base">{title}</div>
       <div className="text-[#a7a7a7] text-sm text-cap uppercase">{channel}</div>
-    </div>
+    </Link>
   );
 };

@@ -12,6 +12,7 @@ export const PodcastList = async () => {
           return (
             <PodcastCover
               {...{
+                id: series.id,
                 imageUrl: series.thumbnail,
                 title: series.title,
                 channel: series.channel,

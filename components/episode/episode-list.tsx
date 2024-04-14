@@ -6,6 +6,7 @@ export const EpisodeList = async ({ seriesId }: { seriesId: string }) => {
   const episodeList = await episodeListAction({
     seriesId: Number(seriesId),
   });
+  console.log("episodeList", episodeList);
   return (
     <MaxWidthWrapper>
       <div className="flex flex-wrap gap-6 mt-10">
