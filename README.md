@@ -1,3 +1,16 @@
-sudo docker compose run nextjs npm run db:seed
+## 背景
 
-npx prisma migrate dev --name "init"
+刻意练习英语听力（适合上班时使用）。这是一个可以把英文博客按段切割播放的网站。它特别适合母语非英文的人用来强化学习英文听力。
+
+## 使用方法
+
+- **a 键位**: 播放上一段
+- **s 键位**: 播放当前段
+- **d 键位**: 播放下一段
+- **space 键位**: 播放/暂停
+- **e 键位**: 展示/隐藏字幕
+- **q 键位**: 播完当前段自动暂停
+
+## 致谢
+
+- [人人都能用英语](https://github.com/xiaolai/everyone-can-use-english)，这是一款极佳的练习英语口语的工具。极力推荐
