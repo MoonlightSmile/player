@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: false,
+    images: {
+      remotePatterns: [
+        {
+          protocol: 'https',
+          hostname: '*',
+        },
+      ],
+    },
     webpack(config, options) {
         config.module.rules.push({
           test: /\.(wav|mp3)$/,
@@ -12,6 +20,7 @@ const nextConfig = {
     
         return config;
       },
+      
 };
 
 export default nextConfig;

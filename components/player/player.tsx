@@ -5,9 +5,8 @@ import { Button } from "../ui/button";
 import { useHotkeys } from "react-hotkeys-hook";
 import { usePlayerStore } from "@/store/player";
 import WaveSurfer from "wavesurfer.js";
-import { TIMELINES } from "./data";
-// import npr from "@/whisper/npr.wav";
-import npr from "@/whisper/npr_mp3.mp3";
+// import { TIMELINES } from "./data";
+// import npr from "@/whisper/npr_mp3.mp3";
 import { Subtitle } from "./subtitles";
 import { Switch } from "@/components/ui/switch";
 
@@ -17,6 +16,7 @@ import {
   SkipBackIcon,
   SkipForwardIcon,
 } from "lucide-react";
+import { secondsToHMS } from "./util";
 
 // a: 上一个
 // s: 重复
@@ -24,15 +24,11 @@ import {
 // space: 播放/暂停
 // q: 开启/ 关闭自动暂时
 
-// timeline
-// https://static.ssr8.cn/player/timeline.json
-// const audioUrls = ["https://static.ssr8.cn/player/jobs.mp3"];
-// const audioUrl = "https://static.ssr8.cn/player/segment.wav";
-const audioUrl = npr;
+// const audioUrl = npr;
 
-const loadJSON = async () => {
-  // return await fetch("https://static.ssr8.cn/player/segment.json")
-  return await fetch("https://static.ssr8.cn/player/timeline.json")
+// https://static.ssr8.cn/player/timeline.json
+const loadJSON = async ({ url }: { url: string }) => {
+  return await fetch(url)
     .then((response) => {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -47,22 +43,26 @@ const loadJSON = async () => {
     });
 };
 
-// https://static.ssr8.cn/player/segment.wav
-// https://static.ssr8.cn/player/segment.json
-
 const formatTime = (seconds: number) =>
   [seconds / 60, seconds % 60]
     .map((v) => `0${Math.floor(v)}`.slice(-2))
     .join(":");
 
-// A React component that will render wavesurfer
-export const Player = () => {
+export const Player = ({
+  audioUrl,
+  timelineUrl,
+}: {
+  audioUrl: string;
+  timelineUrl: string;
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const {
     ws,
     setWs,
     isInitialized,
+    isReady,
     setIsInitialized,
+    setIsReady,
     timelines,
     setTimelines,
     onTimeupdate,
@@ -73,6 +73,7 @@ export const Player = () => {
     autoPause,
     setConfigAutoPause,
     playPause,
+    subtitleVisible,
   } = usePlayerStore();
 
   useEffect(() => {
@@ -85,22 +86,22 @@ export const Player = () => {
       waveColor: "rgb(200, 0, 200)",
       progressColor: "rgb(100, 0, 100)",
     });
-    console.log("_ws", _ws);
     setWs(_ws);
-  }, [setWs, ws]);
+  }, [audioUrl, setWs, ws]);
 
   useEffect(() => {
     (async () => {
-      // const data: any = await loadJSON();
-      // setTimelines(data?.timeline);
-      setTimelines(TIMELINES.timeline);
+      const timelineData = await loadJSON({ url: timelineUrl });
+      setTimelines(timelineData?.[0]?.timeline);
+      setIsReady(true);
     })();
-  }, [setTimelines]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setTimelines, timelineUrl]);
 
   useHotkeys(
-    ["space", "a", "d", "q", "s"],
+    ["space", "a", "d", "q", "s", "e"],
     (keyboardEvent, hotkeyEvent) => {
-      if (!ws || !isInitialized) return;
+      if (!ws || !isInitialized || !isReady) return;
 
       keyboardEvent.preventDefault();
       console.log("keys", hotkeyEvent.keys!.join(""));
@@ -120,9 +121,13 @@ export const Player = () => {
         case "s":
           document?.getElementById("loop")?.click();
           break;
+        case "e":
+          console.log("e");
+          document?.getElementById("subtitle")?.click();
+          break;
       }
     },
-    [ws, isInitialized]
+    [ws, isInitialized, isReady]
   );
 
   useEffect(() => {
@@ -171,7 +176,6 @@ export const Player = () => {
     const prevSegment = timelines[currentSegmentIndex - 1];
     const prevStartTime = prevSegment?.startTime ?? 0;
     const dest = prevStartTime / ws!.getDuration();
-    console.log("ws dest1", dest);
     ws?.seekTo(dest);
     playPause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,7 +190,6 @@ export const Player = () => {
     const nextSegment = timelines[currentSegmentIndex + 1];
     const nextStartTime = nextSegment?.startTime ?? 0;
     const dest = nextStartTime / ws!.getDuration();
-    console.log("ws dest3", dest);
     ws?.seekTo(dest);
     playPause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -199,7 +202,6 @@ export const Player = () => {
     const currentSegment = timelines[currentSegmentIndex];
     const currentStartTime = currentSegment?.startTime ?? 0;
     const dest = currentStartTime / ws!.getDuration();
-    console.log("ws dest2", dest);
     ws?.seekTo(dest);
     playPause();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,9 +215,9 @@ export const Player = () => {
   return (
     <>
       <div ref={containerRef} />
-      <p>Current audio: {audioUrl}</p>
-      <p>Current time: {formatTime(currentTime)}</p>
-      <Subtitle text={timelines[currentSegmentIndex]?.text} />
+      <p>
+        {formatTime(currentTime)}/{secondsToHMS(ws?.getDuration() as number)}
+      </p>
 
       <div className="flex gap-4 mx-4 my-4 items-center">
         <Button
@@ -255,11 +257,16 @@ export const Player = () => {
           checked={autoPause}
           onCheckedChange={onAutoPause}
         />
-
-        <Button id="loop" onClick={handleLoopCurrentSegment}>
-          重复此 segment
-        </Button>
+        <Button
+          id="loop"
+          className="invisible"
+          onClick={handleLoopCurrentSegment}
+        ></Button>
       </div>
+      <Subtitle
+        visible={subtitleVisible}
+        text={timelines?.[currentSegmentIndex]?.text}
+      />
     </>
   );
 };

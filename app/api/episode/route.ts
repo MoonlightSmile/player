@@ -1,8 +1,31 @@
 import db from "@/db";
 
-export async function GET(request: Request) {
-  const series = await db.series.findMany();
-  return Response.json(series);
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const searchParams = new URLSearchParams(url.search);
+  const status = searchParams.get("status");
+  const seriesId = searchParams.get("seriesId");
+  const limit = searchParams.get("limit");
+  let whereClause: any = {};
+  if (status) {
+    whereClause.status = status;
+  }
+  if (seriesId) {
+    whereClause.seriesId = Number(seriesId);
+  }
+  const queryOptions: any = {
+    where: whereClause,
+    orderBy: {
+      order: "desc",
+    },
+  };
+
+  if (limit && !isNaN(Number(limit))) {
+    queryOptions.take = parseInt(limit, 10);
+  }
+
+  const episodes = await db.episode.findMany(queryOptions);
+  return Response.json(episodes);
 }
 
 export async function POST(request: Request) {
@@ -61,4 +84,20 @@ export async function POST(request: Request) {
   }
 
   return Response.json(results); // 返回新建或更新的结果数组
+}
+
+export async function PUT(request: Request) {
+  const { episodeId, audioKey, whisperKey, timelineKey } = await request.json();
+  console.log(episodeId, audioKey, whisperKey, timelineKey);
+  const episode = await db.episode.update({
+    where: { id: episodeId },
+    data: {
+      status: "DONE",
+      mediaUrl: audioKey,
+      alignUrl: timelineKey,
+      whisperUrl: whisperKey,
+    },
+  });
+
+  return Response.json(episode);
 }
