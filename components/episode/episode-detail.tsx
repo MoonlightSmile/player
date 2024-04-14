@@ -11,8 +11,9 @@ export const EpisodeDetail = async ({ episodeId }: { episodeId: number }) => {
 
   console.log("item", item);
   if (!item) return null;
-  const { title, description, thumbnail, mediaUrl, alignUrl } = (item ??
-    {}) as any;
+  const { title, description, thumbnail, mediaUrl, alignUrl, audioUrl } =
+    (item ?? {}) as any;
+  console.log("mediaUrl", mediaUrl, alignUrl);
   return (
     <div className="flex flex-col px-6 py-4 gap-x-8 rounded-lg overflow-hidden shadow-sm border border-gray-200 cursor-pointer">
       <div className="flex items-center">
@@ -28,7 +29,8 @@ export const EpisodeDetail = async ({ episodeId }: { episodeId: number }) => {
 
       <div className="my-6">
         <Player
-          audioUrl={buildUrl(mediaUrl)}
+          // audioUrl={buildUrl(mediaUrl)}
+          audioUrl={audioUrl}
           timelineUrl={buildUrl(alignUrl)}
         />
       </div>
